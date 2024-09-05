@@ -7,7 +7,7 @@
     https://fakenum.com/receive-free-sms-online?country=United%20States, 
     https://getfreesmsnumber.com/free-receive-sms-from-us]
 
-   This script utilizes selenium 2 (selenium + webdriver = selenium2 lolwut).
+   This script utilizes selenium 4 (selenium + webdriver geckodriver.exe).
    This script was designed with those 4 sites in mind, and will not be universal,
    so plz don't try just putting in a different site in the driver.get methods, as
    every site is designed differently."""
@@ -18,9 +18,12 @@ import os
 import sys
 from selenium import webdriver
 
+
 # selenium webdriver object
 # put in the absolute path for the geckodriver where the underlined portion is
-DRIVER = webdriver.Firefox(executable_path=r"_________\geckoDRIVER.exe")
+#DRIVER = webdriver.Firefox(executable_path=r"_________\geckoDRIVER.exe")
+#DRIVER = webdriver.Firefox(executable_path=r"geckodriver.exe")
+DRIVER = webdriver.Firefox()
 EXISTING_DATAPOINTS = set()
 
 
@@ -44,14 +47,14 @@ def web_scraper_fakenum():
     DRIVER.get("https://fakenum.com/receive-free-sms-online?country=United%20States")
     with open("sms_spam_dataset.csv", "a", encoding="utf-8") as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=",")
-        nums_links = DRIVER.find_elements_by_xpath("//a[@class='btn btn-info btn-sm']")
+        nums_links = DRIVER.find_elements("xpath","//a[@class='btn btn-info btn-sm']")
         nums_links = [i.get_attribute("href") for i in nums_links]
         numbers = [i[-10:] for i in nums_links]
         for num in range(len(nums_links)):
             DRIVER.get(nums_links[num])
             dst_num = numbers[num]
             print(dst_num)
-            info = DRIVER.find_elements_by_xpath("//td")
+            info = DRIVER.find_elements("xpath","//td")
             src_nums = [i.text for i in info][3::3]
             msgs = [i.text for i in info][5::3]
             for i in range(len(src_nums)):
@@ -71,19 +74,19 @@ def web_scraper_getfreesmsnumber():
     from the source phone number like there was from the freephonenum website"""
 
     DRIVER.get("https://getfreesmsnumber.com/login/login.php")
-    username = DRIVER.find_element_by_name("username")
-    password = DRIVER.find_element_by_name("password")
+    username = DRIVER.find_element("name","username")
+    password = DRIVER.find_element("name","password")
 
     # fills out the username and password forms and "clicks" the link with a throwaway account. you're welcome.
     username.send_keys("throwaway123")
     password.send_keys("throwaway123!@#")
-    DRIVER.find_element_by_id("btn-login").click()
+    DRIVER.find_element("id","btn-login").click()
     time.sleep(1)
     DRIVER.get("https://getfreesmsnumber.com/free-receive-sms-from-us")
 
     with open("sms_spam_dataset.csv", "a", encoding="utf-8") as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=",")
-        nums_links = DRIVER.find_elements_by_xpath("//a[@class='clickcheck']")
+        nums_links = DRIVER.find_elements("xpath","//a[@class='clickcheck']")
         nums_links = [i.get_attribute("href") for i in nums_links]
         numbers = [i[-10:] for i in nums_links]
         print(numbers)
@@ -93,7 +96,7 @@ def web_scraper_getfreesmsnumber():
             print(dst_num)
             while 1:
                 try:
-                    content = DRIVER.find_elements_by_xpath(
+                    content = DRIVER.find_elements("xpath",
                         "//div[@class='contentresult']"
                     )
                     all_text = [
@@ -107,7 +110,7 @@ def web_scraper_getfreesmsnumber():
                             continue
                         spamwriter.writerow(list(row_to_write))
                         print("{}\n{}\n".format(src_num, msg))
-                    DRIVER.find_element_by_xpath(
+                    DRIVER.find_element("xpath",
                         "//a[text()[contains(.,'Next')]]"
                     ).click()
                 except Exception as e:
@@ -127,9 +130,9 @@ def web_scraper_receivesms():
         for num in range(0, 2000):
             DRIVER.get("https://receive-sms.com/?page={}".format(num))
             time.sleep(0.25)
-            src_num = DRIVER.find_elements_by_xpath("//td[@data-title='[From]']")
-            dst_num = DRIVER.find_elements_by_xpath("//td[@data-title='[To]']")
-            msg = DRIVER.find_elements_by_xpath("//td[@data-title='[Message]']")
+            src_num = DRIVER.find_elements("xpath","//td[@data-title='[From]']")
+            dst_num = DRIVER.find_elements("xpath","//td[@data-title='[To]']")
+            msg = DRIVER.find_elements("xpath","//td[@data-title='[Message]']")
 
             src_num = [
                 i.text.replace("[", "").replace("]", "").replace("X", "*")[1:]
@@ -169,7 +172,7 @@ def web_scraper_freephonenum():
 
         # goes back and starts scraping
         DRIVER.get("https://freephonenum.com/us/")
-        nums = DRIVER.find_elements_by_xpath(
+        nums = DRIVER.find_elements("xpath",
             "//a[@class='numbers-btn btn btn-secondary btn-block ']"
         )
         nums = [
@@ -185,7 +188,7 @@ def web_scraper_freephonenum():
             time.sleep(0.1)
 
             # text info
-            scraped_info = DRIVER.find_elements_by_xpath("//td")
+            scraped_info = DRIVER.find_elements("xpath","//td")
             src_num = [i.text.replace("-", "") for i in scraped_info if i.text != ""][
                 4::3
             ]
@@ -193,7 +196,7 @@ def web_scraper_freephonenum():
             dst_num = phone_number[1::]
 
             # urls
-            scraped_url = DRIVER.find_elements_by_xpath("//a[@href]")
+            scraped_url = DRIVER.find_elements("xpath","//a[@href]")
             url_for_history_for_number = [
                 i.get_attribute("href")
                 for i in scraped_url
@@ -213,6 +216,6 @@ def web_scraper_freephonenum():
 
 load_set_with_former_datapoints()
 web_scraper_freephonenum()
-web_scraper_receivesms()
-web_scraper_getfreesmsnumber()
-web_scraper_fakenum()
+#web_scraper_receivesms() # GUI OR API CHANGED: LOGIN NEEDED: NOT WORKING
+#web_scraper_getfreesmsnumber()  # HUMAN CHECK: LOGIN CHANGED. NOT WORKING
+#web_scraper_fakenum()   # DOES NOT EXIST YET ()
